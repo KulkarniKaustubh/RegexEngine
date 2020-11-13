@@ -24,7 +24,10 @@ int isValidEscapeCharacter(char escape_ch, char text_ch)
 		(escape_ch == '\\' && text_ch == '\\') ||
 		(escape_ch == '.' && text_ch == '.') ||
 		(escape_ch == '*' && text_ch == '*') ||
-		(escape_ch == '+' && text_ch == '+')) return 1;
+		(escape_ch == '+' && text_ch == '+') ||
+		(escape_ch == '?' && text_ch == '?') ||
+		(escape_ch == '[' && text_ch == '[') ||
+		(escape_ch == ']' && text_ch == ']')) return 1;
 
 	return 0;
 }
@@ -89,24 +92,19 @@ int* match_letter(char *pat, char *text, int *index_arr)
 			}
 		} else if (p[0] == '+') {
 			if (p[1] == '?') {
-				char *ptr = pat;
+				char *ptr = pat + 1;
 
 				while (*ptr != ']') {
 					if (*text != '\0' && (*text == *ptr || *ptr == '.')) {
-						int temp_arr[3] = {0, 0, 0};
-						int *temp_match = match_letter(p + 2, text + 1, temp_arr);
-
-						if (temp_match[0] == 0) break;
-
 						index_arr[2] += 1;
 						text++;
 						index_arr = match_character_class_star_plus(pat + 1, p, text, index_arr, &go_ahead);
 						return match_letter(p + 2, text + go_ahead, index_arr);
 					} else if (*text != '\0' && ptr[1] == '-' && *text >= ptr[0] && *text <= ptr[2]) {
-						int temp_arr[3] = {0, 0, 0};
-						int *temp_match = match_letter(p + 2, text + 1, temp_arr);
-
-						if (temp_match[0] == 0) break;
+						// int temp_arr[3] = {0, 0, 0};
+						// int *temp_match = match_letter(p + 2, text + 1, temp_arr);
+						//
+						// if (temp_match[0] == 0) break;
 
 						index_arr[2] += 1;
 						text++;
@@ -119,24 +117,24 @@ int* match_letter(char *pat, char *text, int *index_arr)
 					}
 				}
 			} else {
-				char *ptr = pat;
+				char *ptr = pat + 1;
 
 				while (*ptr != ']') {
 					if (*text != '\0' && (*text == *ptr || *ptr == '.')) {
-						int temp_arr[3] = {0, 0, 0};
-						int *temp_match = match_letter(p + 1, text + 1, temp_arr);
-
-						if (temp_match[0] == 0) break;
+						// int temp_arr[3] = {0, 0, 0};
+						// int *temp_match = match_letter(p + 1, text + 1, temp_arr);
+						//
+						// if (temp_match[0] == 0) break;
 
 						index_arr[2] += 1;
 						text++;
 						index_arr = match_character_class_star_plus_greedy(pat + 1, p, text, index_arr, &go_ahead);
 						return match_letter(p + 1, text + go_ahead, index_arr);
 					} else if (*text != '\0' && ptr[1] == '-' && *text >= ptr[0] && *text <= ptr[2]) {
-						int temp_arr[3] = {0, 0, 0};
-						int *temp_match = match_letter(p + 1, text + 1, temp_arr);
-
-						if (temp_match[0] == 0) break;
+						// int temp_arr[3] = {0, 0, 0};
+						// int *temp_match = match_letter(p + 1, text + 1, temp_arr);
+						//
+						// if (temp_match[0] == 0) break;
 
 						index_arr[2] += 1;
 						text++;
@@ -221,15 +219,37 @@ int* match_letter(char *pat, char *text, int *index_arr)
 		star_or_plus = 1;
 	} else if (pat[1] == '+') {
 		if (pat[2] == '?') greedy = 0;
-		if (escape_flag && isValidEscapeCharacter(*pat, *text)) star_or_plus = 1;
-		else if (*text != '\0' && (*pat == '.' || *pat == *text)) star_or_plus = 1;
-	} else if (pat[1] == '?') {
 		if (escape_flag && isValidEscapeCharacter(*pat, *text)) {
+			star_or_plus = 1;
+			text++;
 			index_arr[2] += 1;
-			return match_letter(pat + 2, text + 1, index_arr);
-		} else if (*text != '\0' && (*pat == '.' || *pat == *text)) {
+		}
+		else if (!escape_flag && *text != '\0' && (*pat == '.' || *pat == *text)) {
+			star_or_plus = 1;
+			text++;
 			index_arr[2] += 1;
-			return match_letter(pat + 2, text + 1, index_arr);
+		}
+	} else if (pat[1] == '?') {
+		if (!escape_flag && *text != '\0' && (*pat == '.' || *pat == *text)) {
+			int temp_arr[3] = {0, 0, 0};
+			int *temp_match = match_letter(pat + 2, text + 1, temp_arr);
+
+			if (temp_match[0] == 0) {
+				return match_letter(pat + 2, text, index_arr);
+			} else {
+				index_arr[2] += 1;
+				return match_letter(pat + 2, text + 1, index_arr);
+			}
+		} else if (escape_flag && isValidEscapeCharacter(*pat, *text)) {
+			int temp_arr[3] = {0, 0, 0};
+			int *temp_match = match_letter(pat + 2, text + 1, temp_arr);
+
+			if (temp_match[0] == 0) {
+				return match_letter(pat + 2, text, index_arr);
+			} else {
+				index_arr[2] += 1;
+				return match_letter(pat + 2, text + 1, index_arr);
+			}
 		} else {
 			return match_letter(pat + 2, text, index_arr);
 		}
@@ -254,7 +274,7 @@ int* match_letter(char *pat, char *text, int *index_arr)
 		}
 	}
 
-	if (*text != '\0' && (*pat == '.' || *pat == *text)) {
+	if (!escape_flag && *text != '\0' && (*pat == '.' || *pat == *text)) {
 		index_arr[2] += 1;
 		return match_letter(pat + 1, text + 1, index_arr);
 	}
@@ -326,7 +346,7 @@ int* match_character_class_star_plus_greedy(char *pat, char *p, char *text, int 
 			int temp_arr[3] = {0, 0, 0};
 			int *temp_match = match_letter(p + 1, t, temp_arr);
 			if (temp_match[0] == 1) break;
-			else {
+			else if (t > text) {
 				(*go_ahead)--;
 			}
 		} while (t-- > text);
@@ -347,14 +367,19 @@ int* match_star_plus_greedy(char *pat, char *text, int *index_arr, int escape_fl
 			char *t;
 
 			for (t = text; *t != '\0' && (*t == *pat || *pat == '.'); ++t, ++(*go_ahead));
+			int go_ahead_flag = 0;
 			do {
 				int temp_arr[3] = {0, 0, 0};
 				int *temp_match = match_letter(pat + 2, t, temp_arr);
 				if (temp_match[0] == 1) {
 					break;
-				} else {
+				} else if (t > text) {
 					(*go_ahead)--;
 				}
+				// } else if (go_ahead_flag) {
+				// 	(*go_ahead)--;
+				// }
+				go_ahead_flag = 1;
 			} while (t-- > text);
 
 			// if (t != text) index_arr[0] = 1;
@@ -363,15 +388,20 @@ int* match_star_plus_greedy(char *pat, char *text, int *index_arr, int escape_fl
 		} else {
 			char *t;
 
-			for (t = text; *t != '\0' && (isValidEscapeCharacter(*pat, *t) || *pat == '.'); ++t, ++(*go_ahead));
+			for (t = text; *t != '\0' && isValidEscapeCharacter(*pat, *t); ++t, ++(*go_ahead));
+			int go_ahead_flag = 0;
 			do {
 				int temp_arr[3] = {0, 0, 0};
 				int *temp_match = match_letter(pat + 2, t, temp_arr);
 				if (temp_match[0] == 1) {
 					break;
-				} else {
+				} else if (t > text) {
 					(*go_ahead)--;
 				}
+				// } else if (go_ahead_flag) {
+				// 	(*go_ahead)--;
+				// }
+				go_ahead_flag = 1;
 			} while (t-- > text);
 
 			index_arr[2] += *go_ahead;
@@ -390,28 +420,38 @@ int* match_star_plus(char *pat, char *text, int *index_arr, int escape_flag, int
 		if (pat[3] == '\0') return index_arr;
 
 		if (!escape_flag) {
+			int go_ahead_flag = 0;
 			do {
 				int temp_arr[3] = {0, 0, 0};
 				int *temp_match = match_letter(pat + 3, text, temp_arr);
 				if (temp_match[0] == 1) {
 					break;
-				} else {
+				} else if (*text != '\0' && (*text == *pat || *pat == '.')) {
 					(*go_ahead)++;
 				}
+				// } else if (go_ahead_flag) {
+				// 	(*go_ahead)++;
+				// }
+				go_ahead_flag = 1;
 			} while (*text != '\0' && (*text++ == *pat || *pat == '.'));
 
 			index_arr[2] += *go_ahead;
 			return index_arr;
 		} else {
+			int go_ahead_flag = 0;
 			do {
 				int temp_arr[3] = {0, 0, 0};
 				int *temp_match = match_letter(pat + 3, text, temp_arr);
 				if (temp_match[0] == 1) {
 					break;
-				} else {
+				} else if (*text != '\0' && isValidEscapeCharacter(*pat, *text)) {
 					(*go_ahead)++;
 				}
-			} while (*text != '\0' && (isValidEscapeCharacter(*pat, *text++) || *pat == '.'));
+				// } else if (go_ahead_flag) {
+				// 	(*go_ahead)++;
+				// }
+				go_ahead_flag = 1;
+			} while (*text != '\0' && isValidEscapeCharacter(*pat, *text++));
 
 			index_arr[2] += *go_ahead;
 			return index_arr;
