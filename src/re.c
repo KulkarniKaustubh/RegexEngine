@@ -40,8 +40,6 @@ int* match(char *pat, char *text)
 	}
 	if (*pat == '^') {
 		index_arr = match_letter(pat + 1, text, index_arr);
-		// for (int i=0; i<3; ++i) printf("%d ", index_arr[i]);
-		// printf("\n");
 	} else {
 		int go_ahead = 0;
 		do {
@@ -51,7 +49,6 @@ int* match(char *pat, char *text)
 				text++;
 				index_arr[1] = go_ahead;
 				index_arr[2] = go_ahead;
-				// if (index_arr[2] > strlen(text)) break;
 			}
 			else break;
 		} while (*text != '\0');
@@ -62,11 +59,6 @@ int* match(char *pat, char *text)
 
 int* match_letter(char *pat, char *text, int *index_arr)
 {
-	// printf("----Match Letter-----\n");
-	// printf("here pat is : %s and text is : %s\n", pat, text);
-	// printf("ascii of *text is : %d\n", (int)*text);
-	// printf("-----Match Letter End-----\n");
-
 	if (*pat == '\0' || (*pat == '$' && *text == '\0')) {
 		index_arr[0] = 1;
 		return index_arr;
@@ -101,11 +93,6 @@ int* match_letter(char *pat, char *text, int *index_arr)
 						index_arr = match_character_class_star_plus(pat + 1, p, text, index_arr, &go_ahead);
 						return match_letter(p + 2, text + go_ahead, index_arr);
 					} else if (*text != '\0' && ptr[1] == '-' && *text >= ptr[0] && *text <= ptr[2]) {
-						// int temp_arr[3] = {0, 0, 0};
-						// int *temp_match = match_letter(p + 2, text + 1, temp_arr);
-						//
-						// if (temp_match[0] == 0) break;
-
 						index_arr[2] += 1;
 						text++;
 						index_arr = match_character_class_star_plus(pat + 1, p, text, index_arr, &go_ahead);
@@ -121,21 +108,11 @@ int* match_letter(char *pat, char *text, int *index_arr)
 
 				while (*ptr != ']') {
 					if (*text != '\0' && (*text == *ptr || *ptr == '.')) {
-						// int temp_arr[3] = {0, 0, 0};
-						// int *temp_match = match_letter(p + 1, text + 1, temp_arr);
-						//
-						// if (temp_match[0] == 0) break;
-
 						index_arr[2] += 1;
 						text++;
 						index_arr = match_character_class_star_plus_greedy(pat + 1, p, text, index_arr, &go_ahead);
 						return match_letter(p + 1, text + go_ahead, index_arr);
 					} else if (*text != '\0' && ptr[1] == '-' && *text >= ptr[0] && *text <= ptr[2]) {
-						// int temp_arr[3] = {0, 0, 0};
-						// int *temp_match = match_letter(p + 1, text + 1, temp_arr);
-						//
-						// if (temp_match[0] == 0) break;
-
 						index_arr[2] += 1;
 						text++;
 						index_arr = match_character_class_star_plus_greedy(pat + 1, p, text, index_arr, &go_ahead);
@@ -376,13 +353,9 @@ int* match_star_plus_greedy(char *pat, char *text, int *index_arr, int escape_fl
 				} else if (t > text) {
 					(*go_ahead)--;
 				}
-				// } else if (go_ahead_flag) {
-				// 	(*go_ahead)--;
-				// }
 				go_ahead_flag = 1;
 			} while (t-- > text);
 
-			// if (t != text) index_arr[0] = 1;
 			index_arr[2] += *go_ahead;
 			return index_arr;
 		} else {
@@ -398,9 +371,6 @@ int* match_star_plus_greedy(char *pat, char *text, int *index_arr, int escape_fl
 				} else if (t > text) {
 					(*go_ahead)--;
 				}
-				// } else if (go_ahead_flag) {
-				// 	(*go_ahead)--;
-				// }
 				go_ahead_flag = 1;
 			} while (t-- > text);
 
@@ -429,9 +399,6 @@ int* match_star_plus(char *pat, char *text, int *index_arr, int escape_flag, int
 				} else if (*text != '\0' && (*text == *pat || *pat == '.')) {
 					(*go_ahead)++;
 				}
-				// } else if (go_ahead_flag) {
-				// 	(*go_ahead)++;
-				// }
 				go_ahead_flag = 1;
 			} while (*text != '\0' && (*text++ == *pat || *pat == '.'));
 
@@ -447,9 +414,6 @@ int* match_star_plus(char *pat, char *text, int *index_arr, int escape_flag, int
 				} else if (*text != '\0' && isValidEscapeCharacter(*pat, *text)) {
 					(*go_ahead)++;
 				}
-				// } else if (go_ahead_flag) {
-				// 	(*go_ahead)++;
-				// }
 				go_ahead_flag = 1;
 			} while (*text != '\0' && isValidEscapeCharacter(*pat, *text++));
 
